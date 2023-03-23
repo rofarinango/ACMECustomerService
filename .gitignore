@@ -1,0 +1,35 @@
+# IntelliJ IDEA
+.idea/
+
+# Maven
+target/
+
+# Gradle
+.gradle/
+build/
+
+# Compiled Java class files
+*.class
+
+# Compiled Java source files
+*.jar
+
+# Log files
+*.log
+
+# Other build artifacts
+*.war
+*.ear
+*.zip
+
+# Configuration files
+*.iml
+*.ipr
+*.iws
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IntelliJ IDEA out folder
+out/
