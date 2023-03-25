@@ -1,26 +1,30 @@
 import javafx.application.Application;
 import javafx.collections.FXCollections;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class CustomerServiceLayout extends Application {
     private static final String[] PROVINCES = {
             "AB", "BC", "MB", "NB", "NL", "NT", "NS", "NU", "ON", "PE", "QC", "SK", "YT"
     };
-
-    private static final String[] ORDERS = {};
+    private List<Customer> customers = new ArrayList<>();
+    private int currentCustomerRecord = 0;
+    private boolean dataLoaded = false;
+    private String[] ORDERS = {};
     @Override
     public void start(Stage stage) throws Exception {
+
         showStage(stage);
     }
 
@@ -88,7 +92,6 @@ public class CustomerServiceLayout extends Application {
         ordersList.setItems(FXCollections.observableArrayList(ORDERS));
         ordersList.setPrefWidth(140);
         ordersList.setPrefHeight(15);
-        //provinceList.setValue(ORDERS[0]);
         ordersLabelLayout.getChildren().add(ordersLabel);
         ordersLabelLayout.setAlignment(Pos.TOP_LEFT);
         ordersLabelLayout.setPadding(new Insets(0,0,0,75));
@@ -97,17 +100,91 @@ public class CustomerServiceLayout extends Application {
         ordersListLayout.setPadding(new Insets(0,0,0,75));
 
         // Load Data and Save buttons
-        HBox btnsLayout = new HBox();
+        HBox btnLayout = new HBox();
         Button loadBtn = new Button("Load Data");
         loadBtn.setPrefWidth(100);
         Button prevBtn = new Button("<");
         Button nextBtn = new Button(">");
         Button saveBtn = new Button("Save");
         saveBtn.setPrefWidth(100);
-        btnsLayout.getChildren().addAll(loadBtn,prevBtn,nextBtn,saveBtn);
-        btnsLayout.setAlignment(Pos.CENTER);
-        btnsLayout.setSpacing(20);
-        btnsLayout.setPadding(new Insets(50,0,0,0));
+        prevBtn.setDisable(true);
+        nextBtn.setDisable(true);
+        btnLayout.getChildren().addAll(loadBtn,prevBtn,nextBtn,saveBtn);
+        btnLayout.setAlignment(Pos.CENTER);
+        btnLayout.setSpacing(20);
+        btnLayout.setPadding(new Insets(50,0,0,0));
+
+        // On load btn click
+        loadBtn.setOnAction(actionEvent -> {
+            if (!dataLoaded){
+                String filename = "src/customers.dat";
+                CustomerDAO customerDAO = new CustomerDAO(filename);
+                nextBtn.setDisable(false);
+                try{
+                    customers = customerDAO.loadCustomers();
+                    // Show data in fields for the first record
+                    updateTextFields(
+                            fNTxtField,
+                            lNTxtField,
+                            addressTxtField,
+                            cityTxtField,
+                            provinceList,
+                            postalTxtField,
+                            emailTxtField,
+                            phoneTxtField,
+                            ordersList,
+                            customers.get(0));
+                    // Disable prevBtn since we have the first record
+                    prevBtn.setDisable(true);
+                    dataLoaded = true;
+                } catch (IOException | ClassNotFoundException e){
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        nextBtn.setOnAction(actionEvent -> {
+            currentCustomerRecord++;
+            if (currentCustomerRecord!=0){
+                prevBtn.setDisable(false);
+                updateTextFields(
+                        fNTxtField,
+                        lNTxtField,
+                        addressTxtField,
+                        cityTxtField,
+                        provinceList,
+                        postalTxtField,
+                        emailTxtField,
+                        phoneTxtField,
+                        ordersList,
+                        customers.get(currentCustomerRecord));
+            }
+            if (currentCustomerRecord==customers.size()-1){
+                nextBtn.setDisable(true);
+            }
+        });
+
+        prevBtn.setOnAction(actionEvent -> {
+            currentCustomerRecord--;
+            if (currentCustomerRecord!=customers.size()-1){
+                nextBtn.setDisable(false);
+                updateTextFields(
+                        fNTxtField,
+                        lNTxtField,
+                        addressTxtField,
+                        cityTxtField,
+                        provinceList,
+                        postalTxtField,
+                        emailTxtField,
+                        phoneTxtField,
+                        ordersList,
+                        customers.get(currentCustomerRecord));
+                System.out.println(customers.get(currentCustomerRecord).getFirstName());
+            }
+            if (currentCustomerRecord == 0){
+                prevBtn.setDisable(true);
+            }
+        });
 
         // Add elements to the form pane
         customerServiceFormPane.setSpacing(10);
@@ -119,10 +196,80 @@ public class CustomerServiceLayout extends Application {
                         contactInfoLayout,
                         ordersLabelLayout,
                         ordersListLayout,
-                        btnsLayout);
+                        btnLayout);
         return customerServiceFormPane;
     }
 
+    protected void updateTextFields(TextField fName,
+                                    TextField lName,
+                                    TextField address,
+                                    TextField city,
+                                    ComboBox<String> provincesList,
+                                    TextField postal,
+                                    TextField email,
+                                    TextField phone,
+                                    ComboBox<String> ordersList,
+                                    Customer customer){
+        fName.setText(customer.getFirstName());
+        lName.setText(customer.getLastName());
+        address.setText(customer.getAddress());
+        city.setText(customer.getCity());
+        postal.setText(customer.getPostalCode());
+        email.setText(customer.getEmail());
+        phone.setText(customer.getPhoneNumber());
+        String[] ordersStringArray = customer.getOrders().stream().map(order -> order.getOrderNumber()).toArray(String[]::new);
+        ordersList.setItems(FXCollections.observableArrayList(ordersStringArray));
+        if (ordersStringArray.length!=0){
+            ordersList.setValue(ordersStringArray[0]);
+        }
+        updateProvincesComboBox(customer, provincesList);
+    }
+
+    protected void updateProvincesComboBox(Customer customer, ComboBox<String> provincesList){
+        switch (customer.getProvince()){
+            case "Alberta":
+                provincesList.setValue(PROVINCES[0]);
+                break;
+            case "British Columbia":
+                provincesList.setValue(PROVINCES[1]);
+                break;
+            case "Manitoba":
+                provincesList.setValue(PROVINCES[2]);
+                break;
+            case "New Brunswick":
+                provincesList.setValue(PROVINCES[3]);
+                break;
+            case "Newfoundland and Labrador":
+                provincesList.setValue(PROVINCES[4]);
+                break;
+            case "Northwest Territories":
+                provincesList.setValue(PROVINCES[5]);
+                break;
+            case "Nova Scotia":
+                provincesList.setValue(PROVINCES[6]);
+                break;
+            case "Nunavut":
+                provincesList.setValue(PROVINCES[7]);
+                break;
+            case "Ontario":
+                provincesList.setValue(PROVINCES[8]);
+                break;
+            case "Prince Edward Island":
+                provincesList.setValue(PROVINCES[9]);
+                break;
+            case "Québec":
+                provincesList.setValue(PROVINCES[10]);
+                break;
+            case "Saskatchewan":
+                provincesList.setValue(PROVINCES[11]);
+                break;
+            case "Yukon":
+                provincesList.setValue(PROVINCES[12]);
+                break;
+
+
+        }
+    }
     protected MenuBar getMainMenu(){
         //File menu bar
         MenuBar mainMenu = new MenuBar();

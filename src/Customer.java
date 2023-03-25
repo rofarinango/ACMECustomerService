@@ -111,6 +111,11 @@ public class Customer implements Serializable {
         return orders;
     }
 
+    public String[] getOrdersToString(){
+        String[] ordersListToString = (String[]) orders.toArray();
+        return ordersListToString;
+    }
+
     public void setOrders(List<Order> orders) {
         this.orders = orders;
     }
