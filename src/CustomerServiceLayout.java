@@ -28,6 +28,10 @@ public class CustomerServiceLayout extends Application {
         showStage(stage);
     }
 
+    /***
+     * Generates and initialize all the nodes that are part of the ACME Customer Service Form.
+     * @return a VBox that represents the ACME Customer Service Form.
+     */
     protected VBox getFormPane(){
         // ACME Customer Service Form
         VBox customerServiceFormPane = new VBox();
@@ -200,6 +204,19 @@ public class CustomerServiceLayout extends Application {
         return customerServiceFormPane;
     }
 
+    /***
+     * Updates the values of the input parameters in the ACME Customer Service form to show the current values in the form.
+     * @param fName First Name TextField to update.
+     * @param lName Last Name TextField to update.
+     * @param address Address TextField to update.
+     * @param city City TextField to update.
+     * @param provincesList Provinces ComboBox to update their customer corresponding value.
+     * @param postal Postal TextField to update.
+     * @param email Email TextField to update.
+     * @param phone Phone TextField to update.
+     * @param ordersList Orders ComboBox to update to their customer corresponding orders values.
+     * @param customer Customer that contains all the correct values to update in the TextFields.
+     */
     protected void updateTextFields(TextField fName,
                                     TextField lName,
                                     TextField address,
@@ -225,6 +242,11 @@ public class CustomerServiceLayout extends Application {
         updateProvincesComboBox(customer, provincesList);
     }
 
+    /***
+     * Updates the provinces ComboBox to set the value corresponding to the correct customer value.
+     * @param customer Customer that contains the String of the province.
+     * @param provincesList provinces ComboBox to be updated.
+     */
     protected void updateProvincesComboBox(Customer customer, ComboBox<String> provincesList){
         switch (customer.getProvince()){
             case "Alberta":
@@ -270,6 +292,11 @@ public class CustomerServiceLayout extends Application {
 
         }
     }
+
+    /***
+     * Generate the main bar menu that contains the File menu.
+     * @return returns a menu bar object.
+     */
     protected MenuBar getMainMenu(){
         //File menu bar
         MenuBar mainMenu = new MenuBar();
@@ -277,6 +304,11 @@ public class CustomerServiceLayout extends Application {
         mainMenu.getMenus().addAll(menuFile);
         return mainMenu;
     }
+
+    /***
+     * Generates the main BorderPane layout that will contain all the customer service layout.
+     * @return BorderPane representing the customer service main layout.
+     */
     protected BorderPane getMainLayoutPane(){
         MenuBar mainMenu = getMainMenu();
         VBox formPane = getFormPane();
@@ -286,6 +318,10 @@ public class CustomerServiceLayout extends Application {
         return customerServiceLayout;
     }
 
+    /***
+     * Shows the stage
+     * @param stage stage to show.
+     */
     protected void showStage(Stage stage){
         Scene scene = new Scene(getMainLayoutPane(), 600, 400);
         stage.setTitle("Customer Service System");
