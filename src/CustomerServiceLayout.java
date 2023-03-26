@@ -1,5 +1,6 @@
 import javafx.application.Application;
 import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -9,7 +10,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import java.io.IOException;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -147,8 +149,11 @@ public class CustomerServiceLayout extends Application {
             }
         });
 
+        // On nextBtn Click
         nextBtn.setOnAction(actionEvent -> {
             currentCustomerRecord++;
+            saveBtn.setDisable(customers.get(currentCustomerRecord).isRecordSaved());
+
             if (currentCustomerRecord!=0){
                 prevBtn.setDisable(false);
                 updateTextFields(
@@ -168,8 +173,10 @@ public class CustomerServiceLayout extends Application {
             }
         });
 
+        // On prevBtn Click
         prevBtn.setOnAction(actionEvent -> {
             currentCustomerRecord--;
+            saveBtn.setDisable(customers.get(currentCustomerRecord).isRecordSaved());
             if (currentCustomerRecord!=customers.size()-1){
                 nextBtn.setDisable(false);
                 updateTextFields(
@@ -183,11 +190,58 @@ public class CustomerServiceLayout extends Application {
                         phoneTxtField,
                         ordersList,
                         customers.get(currentCustomerRecord));
-                System.out.println(customers.get(currentCustomerRecord).getFirstName());
             }
             if (currentCustomerRecord == 0){
                 prevBtn.setDisable(true);
+
             }
+        });
+
+        //On saveBtn Click
+        saveBtn.setOnAction(actionEvent -> {
+            List<Order> orders = new ArrayList<>();
+            // Get Array that contains orders from the combobox
+            String[] ordersArray = ordersList.getItems().toArray(new String[0]);
+            // Cast to List of orders
+            for (String o: ordersArray){
+                Order order = new Order(o);
+                orders.add(order);
+            }
+
+            if(!customers.get(currentCustomerRecord).isRecordSaved()){
+
+                // Random access file for writing
+                try{
+                    RandomAccessFile customersFile = new RandomAccessFile("savedCustomers.dat", "rw");
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    DataOutputStream dos = new DataOutputStream(baos);
+
+                    // Write the customer data to the DataOutputStream
+                    dos.writeUTF(customers.get(currentCustomerRecord).getFirstName());
+                    dos.writeUTF(customers.get(currentCustomerRecord).getLastName());
+                    dos.writeUTF(customers.get(currentCustomerRecord).getAddress());
+                    dos.writeUTF(customers.get(currentCustomerRecord).getCity());
+                    dos.writeUTF(customers.get(currentCustomerRecord).getProvince());
+                    dos.writeUTF(customers.get(currentCustomerRecord).getPostalCode());
+                    dos.writeUTF(customers.get(currentCustomerRecord).getEmail());
+                    dos.writeUTF(customers.get(currentCustomerRecord).getPhoneNumber());
+                    // Write the orders data to the DataOutputStream
+                    dos.writeInt(orders.size());
+                    for (Order order : orders){
+                        dos.writeUTF(order.getOrderNumber());
+                    }
+                    byte[] data = baos.toByteArray();
+                    customersFile.seek(customersFile.length());
+                    customersFile.write(data);
+                    customersFile.close();
+                    customers.get(currentCustomerRecord).setRecordSaved(true);
+                } catch (FileNotFoundException e) {
+                    throw new RuntimeException(e);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            saveBtn.setDisable(customers.get(currentCustomerRecord).isRecordSaved());
         });
 
         // Add elements to the form pane
@@ -203,6 +257,8 @@ public class CustomerServiceLayout extends Application {
                         btnLayout);
         return customerServiceFormPane;
     }
+
+
 
     /***
      * Updates the values of the input parameters in the ACME Customer Service form to show the current values in the form.

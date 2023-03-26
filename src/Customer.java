@@ -6,6 +6,7 @@
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Customer implements Serializable {
     private String firstName;
@@ -17,6 +18,7 @@ public class Customer implements Serializable {
     private String email;
     private String phoneNumber;
     private List<Order> orders;
+    private boolean isRecordSaved = false;
 
     public Customer(String firstName, String lastName, String address, String city, String province, String postalCode, String email, String phoneNumber, List<Order> orders) {
         this.firstName = firstName;
@@ -118,5 +120,13 @@ public class Customer implements Serializable {
 
     public void setOrders(List<Order> orders) {
         this.orders = orders;
+    }
+
+    public boolean isRecordSaved() {
+        return isRecordSaved;
+    }
+
+    public void setRecordSaved(boolean recordSaved) {
+        isRecordSaved = recordSaved;
     }
 }
