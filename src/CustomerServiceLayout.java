@@ -1,6 +1,10 @@
+/*
+    Assigment 1 - sdcCOSC603Assign1 - Class Name CustomerServiceLayout.java
+    This class will contain the code to implement the ACME Customer Service JavaFX Application.
+    Author: Rodrigo Farinango - SDC - ID#: 000482153
+ */
 import javafx.application.Application;
 import javafx.collections.FXCollections;
-import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -10,7 +14,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -121,128 +124,13 @@ public class CustomerServiceLayout extends Application {
         btnLayout.setPadding(new Insets(50,0,0,0));
 
         // On load btn click
-        loadBtn.setOnAction(actionEvent -> {
-            if (!dataLoaded){
-                String filename = "src/customers.dat";
-                CustomerDAO customerDAO = new CustomerDAO(filename);
-                nextBtn.setDisable(false);
-                try{
-                    customers = customerDAO.loadCustomers();
-                    // Show data in fields for the first record
-                    updateTextFields(
-                            fNTxtField,
-                            lNTxtField,
-                            addressTxtField,
-                            cityTxtField,
-                            provinceList,
-                            postalTxtField,
-                            emailTxtField,
-                            phoneTxtField,
-                            ordersList,
-                            customers.get(0));
-                    // Disable prevBtn since we have the first record
-                    prevBtn.setDisable(true);
-                    dataLoaded = true;
-                } catch (IOException | ClassNotFoundException e){
-                    e.printStackTrace();
-                }
-            }
-        });
-
+        loadBtn.setOnAction(actionEvent -> handleLoadData(nextBtn, prevBtn, fNTxtField, lNTxtField, addressTxtField, cityTxtField, provinceList, postalTxtField, emailTxtField, phoneTxtField, ordersList));
         // On nextBtn Click
-        nextBtn.setOnAction(actionEvent -> {
-            currentCustomerRecord++;
-            saveBtn.setDisable(customers.get(currentCustomerRecord).isRecordSaved());
-
-            if (currentCustomerRecord!=0){
-                prevBtn.setDisable(false);
-                updateTextFields(
-                        fNTxtField,
-                        lNTxtField,
-                        addressTxtField,
-                        cityTxtField,
-                        provinceList,
-                        postalTxtField,
-                        emailTxtField,
-                        phoneTxtField,
-                        ordersList,
-                        customers.get(currentCustomerRecord));
-            }
-            if (currentCustomerRecord==customers.size()-1){
-                nextBtn.setDisable(true);
-            }
-        });
-
+        nextBtn.setOnAction(actionEvent -> handleNxtBtn(nextBtn, prevBtn, saveBtn, fNTxtField, lNTxtField, addressTxtField, cityTxtField, provinceList, postalTxtField, emailTxtField, phoneTxtField, ordersList));
         // On prevBtn Click
-        prevBtn.setOnAction(actionEvent -> {
-            currentCustomerRecord--;
-            saveBtn.setDisable(customers.get(currentCustomerRecord).isRecordSaved());
-            if (currentCustomerRecord!=customers.size()-1){
-                nextBtn.setDisable(false);
-                updateTextFields(
-                        fNTxtField,
-                        lNTxtField,
-                        addressTxtField,
-                        cityTxtField,
-                        provinceList,
-                        postalTxtField,
-                        emailTxtField,
-                        phoneTxtField,
-                        ordersList,
-                        customers.get(currentCustomerRecord));
-            }
-            if (currentCustomerRecord == 0){
-                prevBtn.setDisable(true);
-
-            }
-        });
-
+        prevBtn.setOnAction(actionEvent -> handlePrvBtn(nextBtn, prevBtn, saveBtn, fNTxtField, lNTxtField, addressTxtField, cityTxtField, provinceList, postalTxtField, emailTxtField, phoneTxtField, ordersList));
         //On saveBtn Click
-        saveBtn.setOnAction(actionEvent -> {
-            List<Order> orders = new ArrayList<>();
-            // Get Array that contains orders from the combobox
-            String[] ordersArray = ordersList.getItems().toArray(new String[0]);
-            // Cast to List of orders
-            for (String o: ordersArray){
-                Order order = new Order(o);
-                orders.add(order);
-            }
-
-            if(!customers.get(currentCustomerRecord).isRecordSaved()){
-
-                // Random access file for writing
-                try{
-                    RandomAccessFile customersFile = new RandomAccessFile("savedCustomers.dat", "rw");
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    DataOutputStream dos = new DataOutputStream(baos);
-
-                    // Write the customer data to the DataOutputStream
-                    dos.writeUTF(customers.get(currentCustomerRecord).getFirstName());
-                    dos.writeUTF(customers.get(currentCustomerRecord).getLastName());
-                    dos.writeUTF(customers.get(currentCustomerRecord).getAddress());
-                    dos.writeUTF(customers.get(currentCustomerRecord).getCity());
-                    dos.writeUTF(customers.get(currentCustomerRecord).getProvince());
-                    dos.writeUTF(customers.get(currentCustomerRecord).getPostalCode());
-                    dos.writeUTF(customers.get(currentCustomerRecord).getEmail());
-                    dos.writeUTF(customers.get(currentCustomerRecord).getPhoneNumber());
-                    // Write the orders data to the DataOutputStream
-                    dos.writeInt(orders.size());
-                    for (Order order : orders){
-                        dos.writeUTF(order.getOrderNumber());
-                    }
-                    byte[] data = baos.toByteArray();
-                    customersFile.seek(customersFile.length());
-                    customersFile.write(data);
-                    customersFile.close();
-                    customers.get(currentCustomerRecord).setRecordSaved(true);
-                } catch (FileNotFoundException e) {
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            saveBtn.setDisable(customers.get(currentCustomerRecord).isRecordSaved());
-        });
+        saveBtn.setOnAction(actionEvent -> handleSaveBtn(ordersList, saveBtn));
 
         // Add elements to the form pane
         customerServiceFormPane.setSpacing(10);
@@ -258,8 +146,206 @@ public class CustomerServiceLayout extends Application {
         return customerServiceFormPane;
     }
 
+    /***
+     * Handle method to save current record into a RandomAccessFile.
+     * @param ordersList ordersList that contains orders for each customer.
+     * @param saveBtn saveBtn reference to be disabled if the record is saved.
+     */
+    protected void handleSaveBtn(ComboBox<String> ordersList,
+                                 Button saveBtn){
+        List<Order> orders = new ArrayList<>();
+        // Get Array that contains orders from the combobox
+        String[] ordersArray = ordersList.getItems().toArray(new String[0]);
+        // Cast to List of orders
+        for (String o: ordersArray){
+            Order order = new Order(o);
+            orders.add(order);
+        }
+        if(!customers.get(currentCustomerRecord).isRecordSaved()){
+            // Random access file for writing
+            try{
+                RandomAccessFile customersFile = new RandomAccessFile("savedCustomers.dat", "rw");
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                DataOutputStream dos = new DataOutputStream(baos);
 
+                // Write the customer data to the DataOutputStream
+                dos.writeUTF(customers.get(currentCustomerRecord).getFirstName());
+                dos.writeUTF(customers.get(currentCustomerRecord).getLastName());
+                dos.writeUTF(customers.get(currentCustomerRecord).getAddress());
+                dos.writeUTF(customers.get(currentCustomerRecord).getCity());
+                dos.writeUTF(customers.get(currentCustomerRecord).getProvince());
+                dos.writeUTF(customers.get(currentCustomerRecord).getPostalCode());
+                dos.writeUTF(customers.get(currentCustomerRecord).getEmail());
+                dos.writeUTF(customers.get(currentCustomerRecord).getPhoneNumber());
+                // Write the orders data to the DataOutputStream
+                dos.writeInt(orders.size());
+                for (Order order : orders){
+                    dos.writeUTF(order.getOrderNumber());
+                }
+                byte[] data = baos.toByteArray();
+                customersFile.seek(customersFile.length());
+                customersFile.write(data);
+                customersFile.close();
+                customers.get(currentCustomerRecord).setRecordSaved(true);
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        saveBtn.setDisable(customers.get(currentCustomerRecord).isRecordSaved());
+    }
 
+    /***
+     * Handle method to update info of previous record on prvBtn click.
+     * @param nextBtn nextBtn button reference.
+     * @param prevBtn prevBtn button reference.
+     * @param saveBtn saveBtn button reference.
+     * @param fNTxtField First Name TextField to update.
+     * @param lNTxtField Last Name TextField to update.
+     * @param addressTxtField Address TextField to update.
+     * @param cityTxtField City TextField to update.
+     * @param provinceList Provinces ComboBox to update their customer corresponding value.
+     * @param postalTxtField Postal TextField to update.
+     * @param emailTxtField Email TextField to update.
+     * @param phoneTxtField Phone TextField to update.
+     * @param ordersList Orders ComboBox to update to their customer corresponding orders values.
+     */
+    protected  void handlePrvBtn(Button nextBtn,
+                                 Button prevBtn,
+                                 Button saveBtn,
+                                 TextField fNTxtField,
+                                 TextField lNTxtField,
+                                 TextField addressTxtField,
+                                 TextField cityTxtField,
+                                 ComboBox<String> provinceList,
+                                 TextField postalTxtField,
+                                 TextField emailTxtField,
+                                 TextField phoneTxtField,
+                                 ComboBox<String> ordersList){
+        // Track the current customer record info to update the text fields
+        currentCustomerRecord--;
+        saveBtn.setDisable(customers.get(currentCustomerRecord).isRecordSaved());
+        if (currentCustomerRecord!=customers.size()-1){
+            nextBtn.setDisable(false);
+            updateTextFields(
+                    fNTxtField,
+                    lNTxtField,
+                    addressTxtField,
+                    cityTxtField,
+                    provinceList,
+                    postalTxtField,
+                    emailTxtField,
+                    phoneTxtField,
+                    ordersList,
+                    customers.get(currentCustomerRecord));
+        }
+        if (currentCustomerRecord == 0){
+            prevBtn.setDisable(true);
+
+        }
+    }
+    /***
+     * Handle method to update info of next record on nxtBtn click.
+     * @param nextBtn nextBtn button reference.
+     * @param prevBtn prevBtn button reference.
+     * @param saveBtn saveBtn button reference.
+     * @param fNTxtField First Name TextField to update.
+     * @param lNTxtField Last Name TextField to update.
+     * @param addressTxtField Address TextField to update.
+     * @param cityTxtField City TextField to update.
+     * @param provinceList Provinces ComboBox to update their customer corresponding value.
+     * @param postalTxtField Postal TextField to update.
+     * @param emailTxtField Email TextField to update.
+     * @param phoneTxtField Phone TextField to update.
+     * @param ordersList Orders ComboBox to update to their customer corresponding orders values.
+     */
+    protected void handleNxtBtn(Button nextBtn,
+                                Button prevBtn,
+                                Button saveBtn,
+                                TextField fNTxtField,
+                                TextField lNTxtField,
+                                TextField addressTxtField,
+                                TextField cityTxtField,
+                                ComboBox<String> provinceList,
+                                TextField postalTxtField,
+                                TextField emailTxtField,
+                                TextField phoneTxtField,
+                                ComboBox<String> ordersList){
+        // Track the current customer record info to update the text fields
+        currentCustomerRecord++;
+        saveBtn.setDisable(customers.get(currentCustomerRecord).isRecordSaved());
+
+        if (currentCustomerRecord!=0){
+            prevBtn.setDisable(false);
+            updateTextFields(
+                    fNTxtField,
+                    lNTxtField,
+                    addressTxtField,
+                    cityTxtField,
+                    provinceList,
+                    postalTxtField,
+                    emailTxtField,
+                    phoneTxtField,
+                    ordersList,
+                    customers.get(currentCustomerRecord));
+        }
+        if (currentCustomerRecord==customers.size()-1){
+            nextBtn.setDisable(true);
+        }
+    }
+
+    /***
+     * Handle method to update info of previous record on prvBtn click.
+     * @param nextBtn nextBtn button reference.
+     * @param prevBtn prevBtn button reference.
+     * @param fNTxtField First Name TextField to load.
+     * @param lNTxtField Last Name TextField to load.
+     * @param addressTxtField Address TextField to load.
+     * @param cityTxtField City TextField to load.
+     * @param provinceList Provinces ComboBox to load their customer corresponding value.
+     * @param postalTxtField Postal TextField to update.
+     * @param emailTxtField Email TextField to load.
+     * @param phoneTxtField Phone TextField to load.
+     * @param ordersList Orders ComboBox to load to their customer corresponding orders values.
+     */
+    protected void handleLoadData(Button nextBtn,
+                            Button prevBtn,
+                            TextField fNTxtField,
+                            TextField lNTxtField,
+                            TextField addressTxtField,
+                            TextField cityTxtField,
+                            ComboBox<String> provinceList,
+                            TextField postalTxtField,
+                            TextField emailTxtField,
+                            TextField phoneTxtField,
+                            ComboBox<String> ordersList){
+        if (!dataLoaded){
+            String filename = "src/customers.dat";
+            CustomerDAO customerDAO = new CustomerDAO(filename);
+            nextBtn.setDisable(false);
+            try{
+                customers = customerDAO.loadCustomers();
+                // Show data in fields for the first record
+                updateTextFields(
+                        fNTxtField,
+                        lNTxtField,
+                        addressTxtField,
+                        cityTxtField,
+                        provinceList,
+                        postalTxtField,
+                        emailTxtField,
+                        phoneTxtField,
+                        ordersList,
+                        customers.get(0));
+                // Disable prevBtn since we have the first record
+                prevBtn.setDisable(true);
+                dataLoaded = true;
+            } catch (IOException | ClassNotFoundException e){
+                e.printStackTrace();
+            }
+        }
+    }
     /***
      * Updates the values of the input parameters in the ACME Customer Service form to show the current values in the form.
      * @param fName First Name TextField to update.

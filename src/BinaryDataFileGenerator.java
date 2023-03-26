@@ -1,12 +1,12 @@
+/*
+    Assigment 1 - sdcCOSC603Assign1 - Class Name BinaryDataFileGenerator
+    This class will contain the code for the Step 1: Create a data file for the assignment.
+    Author: Rodrigo Farinango - SDC - ID#: 000482153
+ */
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/*
-    Assigment 1 - sdcCOSC603Assign1 - Class Name BinaryDataFileGenerator
-    This class will contain the code for the Step 1: Create a data file for the assingment.
-    Author: Rodrigo Farinango - SDC - ID#: 000482153
- */
 public class BinaryDataFileGenerator {
     public static void main(String[] args) {
         String filename = "src/customers.dat";
